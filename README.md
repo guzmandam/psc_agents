@@ -1,16 +1,82 @@
-# React + Vite
+# PSC — Protocolo de Síntesis Crítica
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Simulación interactiva basada en el modelo de Schelling para estudiar la segregación ideológica y el efecto de recompensar el Steel-manning (síntesis de posturas opuestas) en lugar de la coincidencia de opiniones.
 
-Currently, two official plugins are available:
+## Descripción
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+El **Protocolo de Síntesis Crítica (PSC)** es un modelo de interacción social que combate la formación de burbujas de eco mediante la reingeniería de incentivos: los agentes ganan estatus al comprender y validar posturas opuestas, no al rodearse de quienes piensan igual.
 
-## React Compiler
+La app incluye:
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+- **Cuadrícula de agentes** con ideología continua (Bando A ↔ Bando B), estatus y tolerancia
+- **Hiperparámetros** ajustables: costo de síntesis, incentivo de estatus, anonimato, rigidez ideológica, densidad de población
+- **Escenarios predefinidos**: Mercado de Estatus, Fatiga del Diálogo, Velo Total
+- **KPIs en tiempo real**: Índice de Schelling, tasa Steel-manning, distancia ideológica media, movilidad forzada
+- **Guía integrada** y tooltips (icono ℹ) en cada parámetro
+- **Modo oscuro** y **esquemas de color** personalizables para los agentes
 
-## Expanding the ESLint configuration
+El diseño teórico completo está en [PROJECT.md](./PROJECT.md).
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+## Stack
+
+- **React 19** + **Vite 7**
+- **Tailwind CSS 4** (vía `@tailwindcss/vite`)
+- **Zustand** (estado global)
+- Lógica de simulación en JS puro (`src/core/`)
+
+## Requisitos
+
+- Node.js 20+ (recomendado 20.19+ o 22.12+ para Vite 7)
+- npm
+
+## Instalación y uso
+
+```bash
+# Clonar (o navegar al directorio del proyecto)
+cd PSC_agents
+
+# Instalar dependencias
+npm install
+
+# Desarrollo (hot reload)
+npm run dev
+
+# Build de producción
+npm run build
+
+# Vista previa del build
+npm run preview
+```
+
+Tras `npm run dev`, la app suele estar en `http://localhost:5173`.
+
+## Estructura del proyecto
+
+```
+src/
+  core/           # Lógica de simulación (independiente de la UI)
+    Agent.js
+    SimulationManager.js
+    config.js     # Constantes de cuadrícula, presets de color, helpers RGB
+  store/
+    useStore.js   # Estado global (Zustand): hiperparámetros, métricas, agentes, UI
+  components/
+    ControlPanel.jsx    # Sliders, escenarios, esquema de colores, dark mode
+    GridCanvas.jsx     # Renderizado en canvas de la cuadrícula y agentes
+    MetricsDashboard.jsx  # KPIs con interpretación por rangos y detalle expandible
+    SimulationGuide.jsx   # Guía en acordeón (objetivo, agentes, bandos, etc.)
+  App.jsx
+  main.jsx
+  index.css
+```
+
+## Despliegue
+
+El build genera archivos estáticos en `dist/`. Se puede desplegar en:
+
+- **Vercel / Netlify / Cloudflare Pages**: conectar el repositorio, build command `npm run build`, directorio de salida `dist`.
+- **GitHub Pages**: configurar `base: '/nombre-repo/'` en `vite.config.js` y publicar el contenido de `dist/` (por ejemplo con `gh-pages -d dist`).
+
+## Licencia
+
+Proyecto de código abierto; revisa el repositorio para términos concretos si los hubiera.
