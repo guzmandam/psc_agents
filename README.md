@@ -72,10 +72,7 @@ src/
 
 ## Despliegue
 
-El build genera archivos estáticos en `dist/`. Se puede desplegar en:
-
-- **Vercel / Netlify / Cloudflare Pages**: conectar el repositorio, build command `npm run build`, directorio de salida `dist`.
-- **GitHub Pages**: configurar `base: '/nombre-repo/'` en `vite.config.js` y publicar el contenido de `dist/` (por ejemplo con `gh-pages -d dist`).
+El proyecto está disponible en producción en <a href="https://psc-agents.bdswtechstuff.workers.dev/" target="_blank" rel="noopener noreferrer">Cloudflare Pages &rarr; psc-agents.bdswtechstuff.workers.dev</a>.
 
 ## Licencia
 
