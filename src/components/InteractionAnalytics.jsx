@@ -1,5 +1,66 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useStore } from '../store/useStore';
+
+const InfoTooltip = ({ darkMode }) => {
+  const [visible, setVisible] = useState(false);
+
+  return (
+    <span className="relative inline-block">
+      <button
+        onMouseEnter={() => setVisible(true)}
+        onMouseLeave={() => setVisible(false)}
+        onClick={() => setVisible((v) => !v)}
+        className={`inline-flex items-center justify-center w-5 h-5 rounded-full text-xs font-bold cursor-help transition-colors ${
+          darkMode
+            ? 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+            : 'bg-slate-200 text-slate-500 hover:bg-slate-300'
+        }`}
+        aria-label="Información"
+      >
+        i
+      </button>
+      {visible && (
+        <div
+          className={`absolute z-50 w-72 p-4 rounded-xl shadow-xl border text-sm leading-relaxed ${
+            darkMode
+              ? 'bg-gray-800 border-gray-700 text-gray-200'
+              : 'bg-white border-slate-200 text-slate-700'
+          }`}
+          style={{ bottom: 'calc(100% + 8px)', left: '50%', transform: 'translateX(-50%)' }}
+        >
+          <p className={`font-semibold mb-2 ${darkMode ? 'text-white' : 'text-slate-900'}`}>
+            ¿Qué es un tick?
+          </p>
+          <p className="mb-3">
+            Un <strong>tick</strong> es una ronda de simulación. En cada tick, todos los agentes evalúan su vecindario,
+            se mueven si están insatisfechos, e intentan una interacción de síntesis con un vecino aleatorio.
+            Los ticks ocurren cada 100ms mientras la simulación está activa.
+          </p>
+          <p className={`font-semibold mb-2 ${darkMode ? 'text-white' : 'text-slate-900'}`}>
+            ¿Cómo interpretar los promedios?
+          </p>
+          <p className="mb-2">
+            <strong>Promedio por agente (este tick):</strong> Indica cuántas interacciones tuvo en promedio
+            cada agente durante la última ronda, divididas entre agentes afines
+            (distancia ideológica &lt; 0.5) y opuestos (distancia &ge; 0.5).
+          </p>
+          <p className="mb-2">
+            <strong>Tasa de éxito:</strong> Porcentaje de interacciones que resultaron en síntesis exitosa
+            (steel-manning) con cada tipo de agente.
+          </p>
+          <p>
+            <strong>Acumulado:</strong> Promedio total de interacciones por agente desde el inicio
+            de la simulación. Útil para observar tendencias a largo plazo.
+          </p>
+          <div
+            className={`absolute w-3 h-3 rotate-45 ${darkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-slate-200'}`}
+            style={{ bottom: '-6px', left: '50%', transform: 'translateX(-50%) rotate(45deg)', borderRight: '1px solid', borderBottom: '1px solid', borderColor: 'inherit' }}
+          />
+        </div>
+      )}
+    </span>
+  );
+};
 
 const StatBar = ({ label, value, max, color, darkMode }) => {
   const pct = max > 0 ? Math.min((value / max) * 100, 100) : 0;
@@ -76,8 +137,9 @@ export const InteractionAnalytics = () => {
 
   return (
     <div className={`rounded-xl border p-5 transition-colors duration-300 ${darkMode ? 'bg-gray-900 border-gray-800' : 'bg-white border-gray-200'}`}>
-      <h3 className={`text-lg font-bold mb-4 ${darkMode ? 'text-white' : 'text-slate-800'}`}>
+      <h3 className={`text-lg font-bold mb-4 flex items-center gap-2 ${darkMode ? 'text-white' : 'text-slate-800'}`}>
         Análisis de Interacciones
+        <InfoTooltip darkMode={darkMode} />
       </h3>
 
       <div className="space-y-5">
