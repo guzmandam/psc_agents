@@ -12,6 +12,14 @@ export class SimulationManager {
       avg_ideological_distance: 0,
       forced_mobility: 0
     };
+    this.interactionEdges = [];
+    this.interactionStats = {
+      avgInteractionsAlike: 0,
+      avgInteractionsCounter: 0,
+      successRateAlike: 0,
+      successRateCounter: 0,
+      totalInteractionsThisTick: 0,
+    };
   }
 
   getIndex(x, y) {
@@ -21,6 +29,7 @@ export class SimulationManager {
   initialize(hyperparams) {
     this.agents = [];
     this.grid.fill(null);
+    this.interactionEdges = [];
     const totalCells = this.width * this.height;
     const popCount = Math.floor(totalCells * (hyperparams.population_density / 100));
 
@@ -62,7 +71,15 @@ export class SimulationManager {
     let similar_neighbors_total = 0;
     let total_neighbors_counted = 0;
 
-    // 1. Fase de Evaluación (Schelling style)
+    const ALIKE_THRESHOLD = 0.5;
+
+    let tickAlike = 0;
+    let tickCounter = 0;
+    let tickSuccessAlike = 0;
+    let tickSuccessCounter = 0;
+
+    const tickEdges = [];
+
     for (const agent of this.agents) {
       const neighbors = this.getNeighbors(agent);
       if (neighbors.length === 0) {
@@ -72,7 +89,6 @@ export class SimulationManager {
       
       let similarCount = 0;
       for (const n of neighbors) {
-        // Ideology difference mapped to 0-1 range
         const diff = Math.abs(agent.ideology - n.ideology) / 2;
         if (diff <= agent.tolerance) {
           similarCount++;
@@ -82,11 +98,8 @@ export class SimulationManager {
       similar_neighbors_total += similarCount;
       total_neighbors_counted += neighbors.length;
       
-      // Dissatisfied if the ratio of similar neighbors is LESS than a threshold
-      // For this model, we'll map the tolerance to minimum required similar neighbors
       const similarRatio = similarCount / neighbors.length;
       
-      // If ratio of similar neighbors < (1 - tolerance), they are dissatisfied
       if (similarRatio < (1 - agent.tolerance)) {
         agent.isDissatisfied = true;
       } else {
@@ -94,12 +107,10 @@ export class SimulationManager {
       }
     }
 
-    // Calculate Schelling Index: general clustering level 
     this.metrics.schelling_index = total_neighbors_counted > 0 
       ? similar_neighbors_total / total_neighbors_counted 
       : 0;
 
-    // 2. Fase de Movimiento
     const totalCells = this.width * this.height;
     const emptyCells = totalCells - this.agents.length;
     
@@ -129,7 +140,6 @@ export class SimulationManager {
       }
     }
 
-    // 3 & 4. Fase de Interacción y Síntesis
     for (const agent of this.agents) {
       const neighbors = this.getNeighbors(agent);
       if (neighbors.length === 0) continue;
@@ -137,33 +147,63 @@ export class SimulationManager {
       const target = neighbors[Math.floor(Math.random() * neighbors.length)];
       
       synthesis_attempts++;
+
+      const ideoDist = Math.abs(agent.ideology - target.ideology);
+      const isAlike = ideoDist < ALIKE_THRESHOLD;
+
+      if (isAlike) {
+        tickAlike++;
+        agent.interactionsAlike++;
+      } else {
+        tickCounter++;
+        agent.interactionsCounter++;
+      }
       
-      // Anonymity level helps bypass initial bias, but let's factor it simply:
-      // if anonymity is high, synthesis is easier at first.
       const anonymityBonus = hyperparams.anonymity_level / 200; 
-      
-      // Probability of synthesis success depends on agent's base capacity and hyperparameters
       const probSuccess = agent.synthesisCapacity - (hyperparams.synthesis_cost / 100) + anonymityBonus;
       
+      let success = false;
       if (Math.random() < probSuccess) {
         synthesis_success++;
-        const dist = Math.abs(agent.ideology - target.ideology);
-        total_ideological_distance += dist;
+        total_ideological_distance += ideoDist;
         
-        // Cross-validation grants status
-        const statusGain = (dist * hyperparams.status_incentive) / 10;
+        const statusGain = (ideoDist * hyperparams.status_incentive) / 10;
         agent.status += statusGain;
         target.status += statusGain;
         
-        // Move ideologies slightly closer based on stiffness
         const stiffness = hyperparams.ideological_stiffness / 100;
         const pull = (target.ideology - agent.ideology) * (1 - stiffness) * 0.2;
         
         agent.ideology = Math.max(-1, Math.min(1, agent.ideology + pull));
+        success = true;
+
+        if (isAlike) {
+          tickSuccessAlike++;
+          agent.successAlike++;
+        } else {
+          tickSuccessCounter++;
+          agent.successCounter++;
+        }
       }
+
+      tickEdges.push({
+        source: agent.id,
+        target: target.id,
+        success,
+        ideoDist,
+      });
     }
 
-    // 5. Update Metrics
+    this.interactionEdges = tickEdges;
+
+    this.interactionStats = {
+      avgInteractionsAlike: this.agents.length > 0 ? tickAlike / this.agents.length : 0,
+      avgInteractionsCounter: this.agents.length > 0 ? tickCounter / this.agents.length : 0,
+      successRateAlike: tickAlike > 0 ? (tickSuccessAlike / tickAlike) * 100 : 0,
+      successRateCounter: tickCounter > 0 ? (tickSuccessCounter / tickCounter) * 100 : 0,
+      totalInteractionsThisTick: tickEdges.length,
+    };
+
     this.metrics.forced_mobility = forced_mobility;
     this.metrics.steelmanning_rate = synthesis_attempts > 0 ? (synthesis_success / synthesis_attempts) * 100 : 0;
     this.metrics.avg_ideological_distance = synthesis_success > 0 ? total_ideological_distance / synthesis_success : 0;

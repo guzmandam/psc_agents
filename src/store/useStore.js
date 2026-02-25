@@ -5,7 +5,6 @@ import { GRID_WIDTH, GRID_HEIGHT, COLOR_PRESETS } from '../core/config';
 const simManager = new SimulationManager(GRID_WIDTH, GRID_HEIGHT);
 
 export const useStore = create((set, get) => ({
-  // Hyperparameters
   hyperparams: {
     synthesis_cost: 50,
     status_incentive: 50,
@@ -14,7 +13,6 @@ export const useStore = create((set, get) => ({
     population_density: 30,
   },
 
-  // Metrics
   metrics: {
     schelling_index: 0,
     steelmanning_rate: 0,
@@ -22,18 +20,24 @@ export const useStore = create((set, get) => ({
     forced_mobility: 0,
   },
 
-  // Simulation State
   isRunning: false,
   agents: [],
   tickCount: 0,
 
-  // UI preferences
+  interactionEdges: [],
+  interactionStats: {
+    avgInteractionsAlike: 0,
+    avgInteractionsCounter: 0,
+    successRateAlike: 0,
+    successRateCounter: 0,
+    totalInteractionsThisTick: 0,
+  },
+
   darkMode: true,
   colorScheme: 'blue-red',
   customColorA: [...COLOR_PRESETS['blue-red'].colorA],
   customColorB: [...COLOR_PRESETS['blue-red'].colorB],
 
-  // Actions
   setHyperparam: (key, value) => set((state) => ({
     hyperparams: { ...state.hyperparams, [key]: value }
   })),
@@ -44,7 +48,9 @@ export const useStore = create((set, get) => ({
     set({
       agents: [...simManager.agents],
       tickCount: 0,
-      metrics: { ...simManager.metrics }
+      metrics: { ...simManager.metrics },
+      interactionEdges: [],
+      interactionStats: { ...simManager.interactionStats },
     });
   },
 
@@ -54,7 +60,9 @@ export const useStore = create((set, get) => ({
     set({
       agents: [...simManager.agents],
       tickCount: tickCount + 1,
-      metrics: { ...simManager.metrics }
+      metrics: { ...simManager.metrics },
+      interactionEdges: [...simManager.interactionEdges],
+      interactionStats: { ...simManager.interactionStats },
     });
   },
 
